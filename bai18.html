@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Matching Game</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    header {
+      margin-bottom: 20px;
+    }
+
+    .game-container {
+      display: grid;
+      gap: 15px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    /* Desktop: 4 cột */
+    @media (min-width: 768px) {
+      .game-container {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    /* Mobile: 2 cột */
+    @media (max-width: 767px) {
+      .game-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      perspective: 1000px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .card.flip .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      backface-visibility: hidden;
+    }
+
+    .card-front {
+      background: #334155;
+    }
+
+    .card-back {
+      background: #38bdf8;
+      transform: rotateY(180deg);
+    }
+
+    footer {
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎴 Memory Matching Game</h1>
+    <p>Lượt click: <span id="moves">0</span></p>
+  </header>
+
+  <main class="game-container" id="game"></main>
+
+  <footer>
+    <button id="reset">🔄 Chơi lại</button>
+  </footer>
+
+  <script>
+    const game = document.getElementById("game");
+    const movesText = document.getElementById("moves");
+    const resetBtn = document.getElementById("reset");
+
+    const icons = ["🍎", "🍌", "🍇", "🍒"];
+    let cards = [...icons, ...icons];
+
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+    let moves = 0;
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function createCard(icon) {
+      const card = document.createElement("div");
+      card.classList.add("card");
+      card.dataset.icon = icon;
+
+      card.innerHTML = `
+        <div class="card-inner">
+          <div class="card-front">❓</div>
+          <div class="card-back">${icon}</div>
+        </div>
+      `;
+
+      card.addEventListener("click", () => flipCard(card));
+      return card;
+    }
+
+    function flipCard(card) {
+      if (lockBoard || card === firstCard || card.classList.contains("matched")) return;
+
+      card.classList.add("flip");
+
+      if (!firstCard) {
+        firstCard = card;
+        return;
+      }
+
+      secondCard = card;
+      moves++;
+      movesText.textContent = moves;
+
+      checkMatch();
+    }
+
+    function checkMatch() {
+      const isMatch = firstCard.dataset.icon === secondCard.dataset.icon;
+
+      if (isMatch) {
+        firstCard.classList.add("matched");
+        secondCard.classList.add("matched");
+        resetTurn();
+        checkWin();
+      } else {
+        lockBoard = true;
+        setTimeout(() => {
+          firstCard.classList.remove("flip");
+          secondCard.classList.remove("flip");
+          resetTurn();
+        }, 1000);
+      }
+    }
+
+    function resetTurn() {
+      [firstCard, secondCard, lockBoard] = [null, null, false];
+    }
+
+    function checkWin() {
+      const matchedCards = document.querySelectorAll(".matched");
+      if (matchedCards.length === cards.length) {
+        setTimeout(() => {
+          alert(`🎉 Bạn đã thắng sau ${moves} lượt!`);
+        }, 300);
+      }
+    }
+
+    function startGame() {
+      game.innerHTML = "";
+      moves = 0;
+      movesText.textContent = 0;
+      shuffle(cards).forEach(icon => game.appendChild(createCard(icon)));
+    }
+
+    resetBtn.addEventListener("click", startGame);
+    startGame();
+  </script>
+
+</body>
+</html>
